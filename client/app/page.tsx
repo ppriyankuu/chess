@@ -6,7 +6,7 @@ export default function Home() {
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-center-safe gap-6 px-4 py-8">
       <Link
-        href="https://github.com/ppriyankuu/YOUR_REPO"
+        href="https://github.com/ppriyankuu/chess"
         target="_blank"
         rel="noopener noreferrer"
         className="absolute top-6 right-6 text-base-content/60 hover:text-purple-400 transition-colors"
