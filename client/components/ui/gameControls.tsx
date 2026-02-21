@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import { useGame } from "@/context/gameContext";
 
 export const GameControls = () => {
-    const { send } = useGame();
+    const { connectAndSend } = useGame();
     const [gameIdInput, setGameIdInput] = useState("");
     const [creating, setCreating] = useState(false);
     const [joining, setJoining] = useState(false);
@@ -26,7 +26,7 @@ export const GameControls = () => {
         if (!gameIdInput.trim()) return;
 
         setJoining(true);
-        send({ type: "JOIN_GAME", payload: { gameId: gameIdInput.trim() } });
+        connectAndSend({ type: "JOIN_GAME", payload: { gameId: gameIdInput.trim() } });
 
         handleCloseModal();
     };
@@ -39,7 +39,7 @@ export const GameControls = () => {
                     disabled={creating}
                     onClick={() => {
                         setCreating(true);
-                        send({ type: "CREATE_GAME", payload: {} });
+                        connectAndSend({ type: "CREATE_GAME", payload: {} });
                     }}
                 >
                     {creating ? (

@@ -15,6 +15,7 @@ interface GameContextType {
   send: (event: ClientEvent) => void;
   leaveGame: () => void;
   errorTick: number;
+  connectAndSend: (even: ClientEvent) => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -78,27 +79,26 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     };
   };
 
-  useEffect(() => {
-    connect();
+  const ensureConnection = () => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) return;
 
-    return () => {
-      socketRef.current?.close();
-    };
-  }, []);
+    connect();
+  };
 
   const send = (event: ClientEvent) => {
-    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-      console.log("Socket not ready. Reconnecting...");
-      connect();
-    }
-
-    setTimeout(() => {
+    const waitForOpen = setInterval(() => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
         socketRef.current.send(JSON.stringify(event));
-      } else {
-        console.warn("⚠️ Socket still not ready");
+        clearInterval(waitForOpen);
       }
-    }, 200); // small delay to allow connection to open
+    }, 100);
+  };
+
+  const connectAndSend = (event: ClientEvent) => {
+    ensureConnection();
+    setTimeout(() => {
+      send(event);
+    }, 200);
   };
 
   const handleServerEvent = (event: ServerEvent) => {
@@ -148,7 +148,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <GameContext.Provider
-      value={{ state, gameId, color, playerId, isGameOver, send, leaveGame, errorTick }}
+      value={{ state, gameId, color, playerId, isGameOver, send, leaveGame, errorTick, connectAndSend }}
     >
       {children}
     </GameContext.Provider>
