@@ -50,7 +50,9 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   const leaveGame = () => {
     intentionalCloseRef.current = true;
 
-    send({ type: "LEAVE_GAME", payload: {} });
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify({ type: "LEAVE_GAME", payload: {} }));
+    }
 
     socketRef.current?.close();
 
@@ -86,19 +88,25 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const send = (event: ClientEvent) => {
+    let attempts = 0;
+
     const waitForOpen = setInterval(() => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
         socketRef.current.send(JSON.stringify(event));
         clearInterval(waitForOpen);
+      }
+
+      attempts++;
+      if (attempts > 50) { // ~5 seconds
+        clearInterval(waitForOpen);
+        notify("Connection failed. Please try again.", "error");
       }
     }, 100);
   };
 
   const connectAndSend = (event: ClientEvent) => {
     ensureConnection();
-    setTimeout(() => {
-      send(event);
-    }, 200);
+    send(event);
   };
 
   const handleServerEvent = (event: ServerEvent) => {

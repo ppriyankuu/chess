@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useGame } from "@/context/gameContext";
 
 export const GameControls = () => {
-    const { connectAndSend } = useGame();
+    const { connectAndSend, gameId } = useGame();
     const [gameIdInput, setGameIdInput] = useState("");
-    const [creating, setCreating] = useState(false);
-    const [joining, setJoining] = useState(false);
+    const [pending, setPending] = useState<"create" | "join" | null>(null);
 
     const modalRef = useRef<HTMLDialogElement>(null);
 
@@ -20,29 +19,37 @@ export const GameControls = () => {
         modalRef.current?.close();
     };
 
-    const handleJoinSubmit = (e: React.FormEvent) => {
+    const handleJoinSubmit = (e: React.SubmitEvent | React.MouseEvent | React.KeyboardEvent) => {
         e.preventDefault();
-
         if (!gameIdInput.trim()) return;
 
-        setJoining(true);
-        connectAndSend({ type: "JOIN_GAME", payload: { gameId: gameIdInput.trim() } });
+        setPending("join");
+        connectAndSend({
+            type: "JOIN_GAME",
+            payload: { gameId: gameIdInput.trim() },
+        });
 
         handleCloseModal();
     };
+
+    useEffect(() => {
+        if (gameId) {
+            setPending(null);
+        }
+    }, [gameId]);
 
     return (
         <>
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md mx-auto p-4">
                 <button
                     className="btn btn-primary flex-1 shadow-lg hover:shadow-xl py-2 transition-all"
-                    disabled={creating}
+                    disabled={pending !== null}
                     onClick={() => {
-                        setCreating(true);
+                        setPending("create");
                         connectAndSend({ type: "CREATE_GAME", payload: {} });
                     }}
                 >
-                    {creating ? (
+                    {pending ? (
                         <span className="loading loading-spinner loading-sm"></span>
                     ) : (
                         <>
@@ -98,9 +105,9 @@ export const GameControls = () => {
                             <button
                                 type="submit"
                                 className="btn btn-primary w-full"
-                                disabled={!gameIdInput.trim() || joining}
+                                disabled={!gameIdInput.trim() || pending !== null}
                             >
-                                {joining ? (
+                                {pending ? (
                                     <span className="loading loading-spinner loading-sm"></span>
                                 ) : (
                                     "Join Now"
