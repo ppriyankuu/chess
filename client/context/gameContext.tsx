@@ -11,9 +11,10 @@ interface GameContextType {
   gameId: string | null;
   playerId: string | null;
   color: "w" | "b" | null;
-  status: "idle" | "waiting" | "playing" | "finished";
+  status: "error" | "waiting" | "playing" | "finished";
   send: (event: ClientEvent) => void;
   leaveGame: () => void;
+  errorTick: number;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -29,8 +30,10 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [color, setColor] = useState<"w" | "b" | null>(null);
   const [status, setStatus] = useState<
-    "idle" | "waiting" | "playing" | "finished"
-  >("idle");
+    "error" | "waiting" | "playing" | "finished"
+  >("waiting");
+
+  const [errorTick, setErrorTick] = useState(0);
 
   const socketRef = useRef<WebSocket | null>(null);
   const isLeavingRef = useRef(false); // 👈 ADD THIS
@@ -122,14 +125,15 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 
       case "ERROR":
         notify(event.payload.message, "error");
-        setStatus("finished");
+        setErrorTick((prev) => prev + 1);
+        setStatus("error");
         break;
     }
   };
 
   return (
     <GameContext.Provider
-      value={{ state, gameId, color, playerId, status, send, leaveGame }}
+      value={{ state, gameId, color, playerId, status, send, leaveGame, errorTick }}
     >
       {children}
     </GameContext.Provider>
