@@ -56,29 +56,29 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     resetGameState();
   };
 
-  useEffect(() => {
-    const connect = () => {
-      const socket = connectSocket((data: ServerEvent) => {
-        handleServerEvent(data);
-      });
+  const connect = () => {
+    const socket = connectSocket((data: ServerEvent) => {
+      handleServerEvent(data);
+    });
 
-      socketRef.current = socket;
+    socketRef.current = socket;
 
-      socket.onclose = () => {
-        console.log("🔌 Socket closed");
+    socket.onclose = () => {
+      console.log("🔌 Socket closed");
 
-        socketRef.current = null;
+      socketRef.current = null;
 
-        if (intentionalCloseRef.current) {
-          intentionalCloseRef.current = false;
-          return;
-        }
+      if (intentionalCloseRef.current) {
+        intentionalCloseRef.current = false;
+        return;
+      }
 
-        console.log("Reconnecting...");
-        setTimeout(connect, 1000);
-      };
+      console.log("Reconnecting...");
+      setTimeout(connect, 1000);
     };
+  };
 
+  useEffect(() => {
     connect();
 
     return () => {
@@ -88,11 +88,17 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 
   const send = (event: ClientEvent) => {
     if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-      console.warn("⚠️ Socket not connected");
-      return;
+      console.log("Socket not ready. Reconnecting...");
+      connect();
     }
 
-    socketRef.current.send(JSON.stringify(event));
+    setTimeout(() => {
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify(event));
+      } else {
+        console.warn("⚠️ Socket still not ready");
+      }
+    }, 200); // small delay to allow connection to open
   };
 
   const handleServerEvent = (event: ServerEvent) => {
