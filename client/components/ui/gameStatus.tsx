@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useGame } from "@/context/gameContext";
 import { useRouter } from "next/navigation";
 import { OpponentJoinNotifier } from "../OpponentJoinNotifier";
+import { MoveList } from "./movesList";
 
 export const GameStatus = () => {
     const { state, color, gameId, playerId, leaveGame } = useGame();
@@ -43,7 +44,7 @@ export const GameStatus = () => {
         <>
             <OpponentJoinNotifier opponentPlayerId={opponent?.playerId} />
 
-            <div className="card bg-base-200 shadow-xl p-6 space-y-6">
+            <div className="card bg-base-200 shadow-xl p-6 flex flex-col h-[80vh] lg:h-[87.6vh]">
 
                 {/* Header */}
                 <div className="space-y-2">
@@ -139,6 +140,10 @@ export const GameStatus = () => {
                         }`}
                 >
                     {isMyTurn ? "Your move" : "Opponent's move"}
+                </div>
+
+                <div className="flex-1 overflow-y-auto mt-4 pr-2 scrollbar-thin scrollbar-thumb-base-300">
+                    <MoveList />
                 </div>
 
                 {/* Leave Button */}
