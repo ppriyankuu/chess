@@ -3,7 +3,7 @@ import { ClientEvent } from "@/types";
 let socket: WebSocket | null = null;
 
 export const connectSocket = (onMessage: (data: any) => void) => {
-    socket = new WebSocket(process.env.WEBSOCKET_URL ?? '');
+    socket = new WebSocket(process.env.WEBSOCKET_URL ?? 'wss://chess-obqk.onrender.com');
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
