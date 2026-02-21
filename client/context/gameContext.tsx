@@ -11,7 +11,7 @@ interface GameContextType {
   gameId: string | null;
   playerId: string | null;
   color: "w" | "b" | null;
-  status: "error" | "waiting" | "playing" | "finished";
+  isGameOver: boolean;
   send: (event: ClientEvent) => void;
   leaveGame: () => void;
   errorTick: number;
@@ -29,9 +29,9 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   const [gameId, setGameId] = useState<string | null>(null);
   const [playerId, setPlayerId] = useState<string | null>(null);
   const [color, setColor] = useState<"w" | "b" | null>(null);
-  const [status, setStatus] = useState<
-    "error" | "waiting" | "playing" | "finished"
-  >("waiting");
+  const [isGameOver, setIsGameOver] = useState<boolean>(false);
+
+
 
   const [errorTick, setErrorTick] = useState(0);
 
@@ -83,7 +83,6 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         setPlayerId(event.payload.playerId);
         setColor(event.payload.color);
         setState(event.payload.state);
-        setStatus("waiting");
         router.push('/game');
         break;
 
@@ -92,7 +91,6 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         setPlayerId(event.payload.playerId);
         setColor(event.payload.color);
         setState(event.payload.state);
-        setStatus("playing");
 
         notify("Game started!", "success");
         router.push('/game');
@@ -100,17 +98,11 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 
       case "OPPONENT_LEFT":
         if (isLeavingRef.current) {
-          // This was triggered by us leaving — ignore it
-          isLeavingRef.current = false; // reset
+          isLeavingRef.current = false;
           return;
         }
 
-        notify(event.payload.message, "info");
-        setState(null);
-        setGameId(null);
-        setColor(null);
-        setStatus("finished");
-        router.push("/");
+        setIsGameOver(true);
         break;
 
       case "GAME_UPDATE":
@@ -119,21 +111,19 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
         break;
 
       case "GAME_OVER":
-        setStatus("finished")
-        notify("Game over with a Checkmate!", "success")
+        setIsGameOver(true);
         break;
 
       case "ERROR":
         notify(event.payload.message, "error");
         setErrorTick((prev) => prev + 1);
-        setStatus("error");
         break;
     }
   };
 
   return (
     <GameContext.Provider
-      value={{ state, gameId, color, playerId, status, send, leaveGame, errorTick }}
+      value={{ state, gameId, color, playerId, isGameOver, send, leaveGame, errorTick }}
     >
       {children}
     </GameContext.Provider>

@@ -1,21 +1,14 @@
 "use client";
 
 import { ChessBoard } from "@/components/chessBoard";
+import { GameOverModal } from "@/components/ui/gameOverModal";
 import { GameStatus } from "@/components/ui/gameStatus";
 import { useGame } from "@/context/gameContext";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 
 export default function GamePage() {
-    const { state, gameId, status, leaveGame } = useGame();
+    const { state, gameId, leaveGame } = useGame();
     const router = useRouter();
-
-    // If no game exists, redirect safely
-    useEffect(() => {
-        if (!gameId && status !== "waiting" && status !== "playing") {
-            router.replace("/");
-        }
-    }, [gameId, status, router]);
 
     // Fallback UI when context/state is missing
     if (!state || !gameId) {
@@ -45,6 +38,8 @@ export default function GamePage() {
 
     return (
         <div className="min-h-screen bg-base-100 p-6">
+            <GameOverModal />
+
             <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
 
                 {/* Board Section */}

@@ -44,7 +44,7 @@ export const GameStatus = () => {
         <>
             <OpponentJoinNotifier opponentPlayerId={opponent?.playerId} />
 
-            <div className="card bg-base-200 shadow-xl p-6 flex flex-col h-[80vh] lg:h-[87.6vh]">
+            <div className="card bg-base-200 shadow-xl p-6 flex flex-col h-[80vh] lg:h-[90vh]">
 
                 {/* Header */}
                 <div className="space-y-2">
@@ -115,21 +115,9 @@ export const GameStatus = () => {
                     </div>
                 )}
 
-                {/* Game Alerts */}
+                {/* Game Alert */}
                 {state.isCheck && (
                     <div className="alert alert-warning">Check!</div>
-                )}
-
-                {state.isCheckmate && (
-                    <div className="alert alert-error">
-                        Checkmate!
-                    </div>
-                )}
-
-                {state.isDraw && (
-                    <div className="alert">
-                        Draw!
-                    </div>
                 )}
 
                 {/* Turn Indicator */}
