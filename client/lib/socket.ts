@@ -11,17 +11,13 @@ export const connectSocket = (onMessage: (data: any) => void) => {
         onMessage(data);
     };
 
-    socket.onclose = () => {
-        console.log("socket closed");
-    };
-
     return socket;
 }
 
-export const sendEvent = (event: ClientEvent) => {
-    if (socket?.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(event));
-    } else {
-        console.warn("Socket not ready");
-    }
-};
+// export const sendEvent = (event: ClientEvent) => {
+//     if (socket?.readyState === WebSocket.OPEN) {
+//         socket.send(JSON.stringify(event));
+//     } else {
+//         console.warn("Socket not ready");
+//     }
+// };

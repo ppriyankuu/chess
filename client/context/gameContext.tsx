@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import { ClientEvent, GameState, ServerEvent } from "@/types";
-import { connectSocket, sendEvent } from "@/lib/socket";
+import { connectSocket } from "@/lib/socket";
 import { useRouter } from "next/navigation";
 import { useNotification } from "./notificationContext";
 
@@ -32,15 +32,28 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   const [isGameOver, setIsGameOver] = useState<boolean>(false);
 
 
-
   const [errorTick, setErrorTick] = useState(0);
 
   const socketRef = useRef<WebSocket | null>(null);
-  const isLeavingRef = useRef(false); // 👈 ADD THIS
+  const isLeavingRef = useRef(false);
+  const intentionalCloseRef = useRef(false);
+
+  const resetGameState = () => {
+    setState(null);
+    setGameId(null);
+    setPlayerId(null);
+    setColor(null);
+    setIsGameOver(false);
+  };
 
   const leaveGame = () => {
-    isLeavingRef.current = true;
+    intentionalCloseRef.current = true;
+
     send({ type: "LEAVE_GAME", payload: {} });
+
+    socketRef.current?.close();
+
+    resetGameState();
   };
 
   useEffect(() => {
@@ -52,10 +65,16 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
       socketRef.current = socket;
 
       socket.onclose = () => {
-        console.log("🔌 Socket closed. Reconnecting...");
+        console.log("🔌 Socket closed");
+
         socketRef.current = null;
 
-        // Auto reconnect after short delay
+        if (intentionalCloseRef.current) {
+          intentionalCloseRef.current = false;
+          return;
+        }
+
+        console.log("Reconnecting...");
         setTimeout(connect, 1000);
       };
     };
