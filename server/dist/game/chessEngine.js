@@ -14,6 +14,7 @@ class ChessEngine {
             isCheckmate: this.chess.isCheckmate(),
             isDraw: this.chess.isDraw(),
             isStalemate: this.chess.isStalemate(),
+            moves: this.chess.history({ verbose: true }),
         };
     }
     makeMove(from, to, promotion) {

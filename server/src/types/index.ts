@@ -1,3 +1,5 @@
+import { Move } from "chess.js";
+
 export type PlayerColor = 'w' | 'b';
 
 export interface GameState {
@@ -17,6 +19,7 @@ export interface GameState {
             connected: boolean;
         };
     };
+    moves: Move[];
 }
 
 export type ClientEvent =
