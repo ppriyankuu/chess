@@ -1,8 +1,18 @@
 import { GameControls } from "@/components/ui/gameControls";
+import Link from "next/link";
+import { FaGithub } from "react-icons/fa";
 
 export default function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center-safe gap-6 px-4 py-8">
+    <main className="relative min-h-screen flex flex-col items-center justify-center-safe gap-6 px-4 py-8">
+      <Link
+        href="https://github.com/ppriyankuu/YOUR_REPO"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-6 right-6 text-base-content/60 hover:text-purple-400 transition-colors"
+      >
+        <FaGithub size={22} />
+      </Link>
 
       {/* Header Section */}
       <div className="text-center space-y-2">
@@ -10,7 +20,7 @@ export default function Home() {
           Chess with Dempho.
         </h1>
         <p className="text-base md:text-lg text-base-content/70 max-w-md mx-auto">
-          Challenge friends or play solo. Real-time moves, zero setup. Just pick a mode and start playing.
+          Create a game, share the Game ID with a friend, and play in real time. No sign-up, no setup — just start playing.
         </p>
       </div>
 

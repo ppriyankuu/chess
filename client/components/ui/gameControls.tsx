@@ -6,6 +6,9 @@ import { useGame } from "@/context/gameContext";
 export const GameControls = () => {
     const { send } = useGame();
     const [gameIdInput, setGameIdInput] = useState("");
+    const [creating, setCreating] = useState(false);
+    const [joining, setJoining] = useState(false);
+
     const modalRef = useRef<HTMLDialogElement>(null);
 
     const handleOpenModal = () => {
@@ -17,11 +20,12 @@ export const GameControls = () => {
         modalRef.current?.close();
     };
 
-    const handleJoinSubmit = (e: React.SubmitEvent) => {
+    const handleJoinSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!gameIdInput.trim()) return;
 
+        setJoining(true);
         send({ type: "JOIN_GAME", payload: { gameId: gameIdInput.trim() } });
 
         handleCloseModal();
@@ -32,12 +36,22 @@ export const GameControls = () => {
             <div className="flex flex-col sm:flex-row gap-4 w-full max-w-md mx-auto p-4">
                 <button
                     className="btn btn-primary flex-1 shadow-lg hover:shadow-xl py-2 transition-all"
-                    onClick={() => send({ type: "CREATE_GAME", payload: {} })}
+                    disabled={creating}
+                    onClick={() => {
+                        setCreating(true);
+                        send({ type: "CREATE_GAME", payload: {} });
+                    }}
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                    Create Game
+                    {creating ? (
+                        <span className="loading loading-spinner loading-sm"></span>
+                    ) : (
+                        <>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Create Game
+                        </>
+                    )}
                 </button>
 
                 <button
@@ -84,9 +98,13 @@ export const GameControls = () => {
                             <button
                                 type="submit"
                                 className="btn btn-primary w-full"
-                                disabled={!gameIdInput.trim()}
+                                disabled={!gameIdInput.trim() || joining}
                             >
-                                Join Now
+                                {joining ? (
+                                    <span className="loading loading-spinner loading-sm"></span>
+                                ) : (
+                                    "Join Now"
+                                )}
                             </button>
                         </div>
                     </form>
