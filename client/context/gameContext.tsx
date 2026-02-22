@@ -100,6 +100,7 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
       if (attempts > 50) { // ~5 seconds
         clearInterval(waitForOpen);
         notify("Connection failed. Please try again.", "error");
+        setGameId(null);
       }
     }, 100);
   };
