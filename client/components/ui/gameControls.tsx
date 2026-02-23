@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useGame } from "@/context/gameContext";
 
 export const GameControls = () => {
-    const { connectAndSend, gameId } = useGame();
+    const { connectAndSend, gameId, errorTick } = useGame();
     const [gameIdInput, setGameIdInput] = useState("");
     const [pending, setPending] = useState<"create" | "join" | null>(null);
 
@@ -37,6 +37,13 @@ export const GameControls = () => {
             setPending(null);
         }
     }, [gameId]);
+
+    useEffect(() => {
+        // If error happens while waiting → stop spinner
+        if (pending) {
+            setPending(null);
+        }
+    }, [errorTick]);
 
     return (
         <>

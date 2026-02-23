@@ -82,7 +82,13 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const ensureConnection = () => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) return;
+    if (
+      socketRef.current &&
+      (socketRef.current.readyState === WebSocket.OPEN ||
+        socketRef.current.readyState === WebSocket.CONNECTING)
+    ) {
+      return;
+    }
 
     connect();
   };
@@ -97,10 +103,10 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       attempts++;
-      if (attempts > 50) { // ~5 seconds
+      if (attempts > 50) {
         clearInterval(waitForOpen);
         notify("Connection failed. Please try again.", "error");
-        setGameId(null);
+        setErrorTick(prev => prev + 1);
       }
     }, 100);
   };
