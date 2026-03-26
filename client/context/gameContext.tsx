@@ -15,7 +15,7 @@ interface GameContextType {
   send: (event: ClientEvent) => void;
   leaveGame: () => void;
   errorTick: number;
-  connectAndSend: (even: ClientEvent) => void;
+  connectAndSend: (event: ClientEvent) => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -38,6 +38,10 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
   const socketRef = useRef<WebSocket | null>(null);
   const isLeavingRef = useRef(false);
   const intentionalCloseRef = useRef(false);
+  const connectionWatcherRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Queue to store events while connection is being established
+  const pendingEventsRef = useRef<ClientEvent[]>([]);
 
   const resetGameState = () => {
     setState(null);
@@ -45,6 +49,13 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     setPlayerId(null);
     setColor(null);
     setIsGameOver(false);
+
+    // Clear connection watcher and pending events
+    if (connectionWatcherRef.current) {
+      clearInterval(connectionWatcherRef.current);
+      connectionWatcherRef.current = null;
+    }
+    pendingEventsRef.current = [];
   };
 
   const leaveGame = () => {
@@ -71,6 +82,12 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
 
       socketRef.current = null;
 
+      // Clear connection watcher
+      if (connectionWatcherRef.current) {
+        clearInterval(connectionWatcherRef.current);
+        connectionWatcherRef.current = null;
+      }
+
       if (intentionalCloseRef.current) {
         intentionalCloseRef.current = false;
         return;
@@ -93,22 +110,58 @@ export const GameProvider = ({ children }: { children: React.ReactNode }) => {
     connect();
   };
 
-  const send = (event: ClientEvent) => {
-    let attempts = 0;
+  // Start watching for connection to open and send pending events
+  const startConnectionWatcher = () => {
+    if (connectionWatcherRef.current) {
+      return; // Already watching
+    }
 
-    const waitForOpen = setInterval(() => {
+    let attempts = 0;
+    const maxAttempts = 50; // 5 seconds timeout
+
+    connectionWatcherRef.current = setInterval(() => {
       if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify(event));
-        clearInterval(waitForOpen);
+        if (connectionWatcherRef.current) {
+          clearInterval(connectionWatcherRef.current);
+          connectionWatcherRef.current = null;
+        }
+        // Send all queued events
+        pendingEventsRef.current.forEach((queuedEvent) => {
+          socketRef.current!.send(JSON.stringify(queuedEvent));
+        });
+        pendingEventsRef.current = [];
       }
 
       attempts++;
-      if (attempts > 50) {
-        clearInterval(waitForOpen);
+      if (attempts > maxAttempts) {
+        if (connectionWatcherRef.current) {
+          clearInterval(connectionWatcherRef.current);
+          connectionWatcherRef.current = null;
+        }
         notify("Connection failed. Please try again.", "error");
         setErrorTick(prev => prev + 1);
+        pendingEventsRef.current = []; // Clear pending events on timeout
       }
     }, 100);
+  };
+
+  const send = (event: ClientEvent) => {
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(event));
+      return;
+    }
+
+    // If connecting, queue the event and start watcher
+    if (socketRef.current?.readyState === WebSocket.CONNECTING) {
+      pendingEventsRef.current.push(event);
+      startConnectionWatcher();
+      return;
+    }
+
+    // Socket is closed or not initialized - create connection and queue event
+    ensureConnection();
+    pendingEventsRef.current.push(event);
+    startConnectionWatcher();
   };
 
   const connectAndSend = (event: ClientEvent) => {
