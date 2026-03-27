@@ -1,4 +1,5 @@
 import { GameControls } from "@/components/ui/gameControls";
+import { ServerStatus } from "@/components/ServerStatus";
 import Link from "next/link";
 import { FaGithub } from "react-icons/fa";
 
@@ -13,6 +14,11 @@ export default function Home() {
       >
         <FaGithub size={22} />
       </Link>
+
+      {/* Server Status Indicator */}
+      <div className="absolute top-6 left-6">
+        <ServerStatus />
+      </div>
 
       {/* Header Section */}
       <div className="text-center space-y-2">

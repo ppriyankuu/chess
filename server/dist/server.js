@@ -1,12 +1,46 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.initServer = void 0;
+const http_1 = __importDefault(require("http"));
 const ws_1 = require("ws");
 const gameManager_1 = require("./game/gameManager");
 const idGenerator_1 = require("./utils/idGenerator");
 const initServer = (port) => {
     const wss = new ws_1.WebSocketServer({ port });
     console.log(`WebSocket server running on ws://localhost:${port}`);
+    // Health check HTTP server
+    const healthServer = http_1.default.createServer((req, res) => {
+        // Allow all origins (CORS)
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        // Handle preflight requests
+        if (req.method === 'OPTIONS') {
+            res.writeHead(204);
+            res.end();
+            return;
+        }
+        if (req.url === '/health' && req.method === 'GET') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                status: 'healthy',
+                timestamp: new Date().toISOString(),
+                uptime: process.uptime(),
+            }));
+        }
+        else {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: 'Not Found' }));
+        }
+    });
+    // Use a different port for health check (main port + 1)
+    const healthPort = port + 1;
+    healthServer.listen(healthPort, () => {
+        console.log(`Health check endpoint running on http://localhost:${healthPort}/health`);
+    });
     wss.on('connection', (ws) => {
         console.log('New connection established.');
         ws.gameId = undefined;

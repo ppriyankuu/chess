@@ -10,7 +10,7 @@ No sign-up. No accounts. Just create a game, share the `GameID`, and start playi
 
 ## Features
 * Create a new game room
-* Join an existing game using a `GameID`
+* Join an existing game using a `Game ID`
 * Real-time move updates using WebSockets
 * Live game status inside the game room:
   * Whose turn it is
@@ -20,6 +20,7 @@ No sign-up. No accounts. Just create a game, share the `GameID`, and start playi
   * Stalemate
 * Game creator always plays as **White**
 * Automatic board orientation based on player color
+* Server health status indicator (green/red dot)
 
 ---
 

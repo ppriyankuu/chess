@@ -1,3 +1,4 @@
+import http from 'http';
 import { WebSocketServer, WebSocket } from 'ws';
 import { ClientEvent, PlayerColor, ServerEvent } from './types';
 import { gameManager } from './game/gameManager';
@@ -12,6 +13,39 @@ export const initServer = (port: number) => {
     const wss = new WebSocketServer({ port });
 
     console.log(`WebSocket server running on ws://localhost:${port}`);
+
+    // Health check HTTP server
+    const healthServer = http.createServer((req, res) => {
+        // Allow all origins (CORS)
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+        // Handle preflight requests
+        if (req.method === 'OPTIONS') {
+            res.writeHead(204);
+            res.end();
+            return;
+        }
+
+        if (req.url === '/health' && req.method === 'GET') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                status: 'healthy',
+                timestamp: new Date().toISOString(),
+                uptime: process.uptime(),
+            }));
+        } else {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: 'Not Found' }));
+        }
+    });
+
+    // Use a different port for health check (main port + 1)
+    const healthPort = port + 1;
+    healthServer.listen(healthPort, () => {
+        console.log(`Health check endpoint running on http://localhost:${healthPort}/health`);
+    });
 
     wss.on('connection', (ws: AuthedWebSocket) => {
         console.log('New connection established.');
