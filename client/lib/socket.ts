@@ -1,8 +1,8 @@
 let socket: WebSocket | null = null;
 
 export const connectSocket = (onMessage: (data: any) => void) => {
-    // socket = new WebSocket(process.env.WEBSOCKET_URL ?? 'wss://chess-obqk.onrender.com');
-    socket = new WebSocket("ws://localhost:8080");
+    socket = new WebSocket(process.env.WEBSOCKET_URL ?? 'wss://chess-obqk.onrender.com');
+    // socket = new WebSocket("ws://localhost:8080");
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);

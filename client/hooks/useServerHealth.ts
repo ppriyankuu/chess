@@ -7,7 +7,7 @@ interface HealthStatus {
     lastChecked: Date | null;
 }
 
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:8081";
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "https://chess-obqk.onrender.com";
 
 export function useServerHealth() {
     const [health, setHealth] = useState<HealthStatus>({
