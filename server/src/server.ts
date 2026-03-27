@@ -10,10 +10,6 @@ interface AuthedWebSocket extends WebSocket {
 }
 
 export const initServer = (port: number) => {
-    const wss = new WebSocketServer({ port });
-
-    console.log(`WebSocket server running on ws://localhost:${port}`);
-
     // Health check HTTP server
     const healthServer = http.createServer((req, res) => {
         // Allow all origins (CORS)
@@ -41,11 +37,11 @@ export const initServer = (port: number) => {
         }
     });
 
-    // Use a different port for health check (main port + 1)
-    const healthPort = port + 1;
-    healthServer.listen(healthPort, () => {
-        console.log(`Health check endpoint running on http://localhost:${healthPort}/health`);
-    });
+    // WebSocket server on the same HTTP server
+    const wss = new WebSocketServer({ server: healthServer });
+
+    console.log(`Server running on http://localhost:${port}`);
+    console.log(`Health check endpoint: http://localhost:${port}/health`);
 
     wss.on('connection', (ws: AuthedWebSocket) => {
         console.log('New connection established.');
@@ -67,6 +63,8 @@ export const initServer = (port: number) => {
             handleDisconnect(ws);
         });
     });
+
+    healthServer.listen(port);
 };
 
 const sendMessage = (ws: WebSocket, event: ServerEvent) => {

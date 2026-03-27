@@ -9,8 +9,6 @@ const ws_1 = require("ws");
 const gameManager_1 = require("./game/gameManager");
 const idGenerator_1 = require("./utils/idGenerator");
 const initServer = (port) => {
-    const wss = new ws_1.WebSocketServer({ port });
-    console.log(`WebSocket server running on ws://localhost:${port}`);
     // Health check HTTP server
     const healthServer = http_1.default.createServer((req, res) => {
         // Allow all origins (CORS)
@@ -36,11 +34,10 @@ const initServer = (port) => {
             res.end(JSON.stringify({ error: 'Not Found' }));
         }
     });
-    // Use a different port for health check (main port + 1)
-    const healthPort = port + 1;
-    healthServer.listen(healthPort, () => {
-        console.log(`Health check endpoint running on http://localhost:${healthPort}/health`);
-    });
+    // WebSocket server on the same HTTP server
+    const wss = new ws_1.WebSocketServer({ server: healthServer });
+    console.log(`Server running on http://localhost:${port}`);
+    console.log(`Health check endpoint: http://localhost:${port}/health`);
     wss.on('connection', (ws) => {
         console.log('New connection established.');
         ws.gameId = undefined;
@@ -59,6 +56,7 @@ const initServer = (port) => {
             handleDisconnect(ws);
         });
     });
+    healthServer.listen(port);
 };
 exports.initServer = initServer;
 const sendMessage = (ws, event) => {
