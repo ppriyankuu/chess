@@ -6,6 +6,7 @@ import { Chessboard } from "react-chessboard";
 import type { PieceDropHandlerArgs } from "react-chessboard";
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { Chess, Square } from "chess.js";
+import { PromotionDialog } from "./ui/promotionDialog";
 
 export const ChessBoard = () => {
     const { state, color, send, errorTick } = useGame();
@@ -13,6 +14,7 @@ export const ChessBoard = () => {
 
     const [localFen, setLocalFen] = useState<string | null>(null);
     const [pendingMove, setPendingMove] = useState<{ from: string; to: string } | null>(null);
+    const [pendingPromotion, setPendingPromotion] = useState<{ from: string; to: string } | null>(null);
 
     // Sync local fen with server truth
     useEffect(() => {
@@ -68,6 +70,19 @@ export const ChessBoard = () => {
         return highlights;
     }, [state?.moves, state?.isCheck, state?.turn, state?.fen]);
 
+    // Check if a move is a pawn promotion
+    const isPromotionMove = useCallback((from: string, to: string, chess: Chess): boolean => {
+        const piece = chess.get(from as Square);
+        if (!piece || piece.type !== "p") return false;
+
+        // White pawn promoting (reaching rank 8)
+        if (piece.color === "w" && to[1] === "8") return true;
+        // Black pawn promoting (reaching rank 1)
+        if (piece.color === "b" && to[1] === "1") return true;
+
+        return false;
+    }, []);
+
     // Memoize onDrop to prevent recreating on every render
     const onDrop = useCallback(({ sourceSquare, targetSquare }: PieceDropHandlerArgs) => {
         if (!localFen) return false;
@@ -82,6 +97,13 @@ export const ChessBoard = () => {
             return false;
         }
 
+        // Check if this is a promotion move
+        if (isPromotionMove(sourceSquare, targetSquare, chess)) {
+            // Store the pending promotion and show dialog
+            setPendingPromotion({ from: sourceSquare, to: targetSquare });
+            return true; // Return true to show the piece move, but we'll wait for promotion selection
+        }
+
         try {
             const move = chess.move({
                 from: sourceSquare,
@@ -94,7 +116,7 @@ export const ChessBoard = () => {
 
             send({
                 type: "MAKE_MOVE",
-                payload: { from: sourceSquare, to: targetSquare },
+                payload: { from: sourceSquare, to: targetSquare, promotion: "q" },
             });
 
             return true;
@@ -102,7 +124,48 @@ export const ChessBoard = () => {
             notify("Invalid move!", "error");
             return false;
         }
-    }, [localFen, color, send, notify]);
+    }, [localFen, color, send, notify, isPromotionMove]);
+
+    // Handle promotion piece selection
+    const handlePromotionSelect = useCallback((piece: "q" | "r" | "b" | "n") => {
+        if (!pendingPromotion || !localFen) return;
+
+        const chess = new Chess(localFen);
+
+        try {
+            const move = chess.move({
+                from: pendingPromotion.from,
+                to: pendingPromotion.to,
+                promotion: piece,
+            });
+
+            setLocalFen(chess.fen());
+            setPendingMove({ from: pendingPromotion.from, to: pendingPromotion.to });
+            setPendingPromotion(null);
+
+            send({
+                type: "MAKE_MOVE",
+                payload: {
+                    from: pendingPromotion.from,
+                    to: pendingPromotion.to,
+                    promotion: piece,
+                },
+            });
+        } catch (err) {
+            notify("Invalid move!", "error");
+            setPendingPromotion(null);
+        }
+    }, [pendingPromotion, localFen, send, notify]);
+
+    // Handle promotion cancellation (ESC key or clicking outside)
+    const handlePromotionCancel = useCallback(() => {
+        if (!pendingPromotion || !localFen) return;
+
+        // Reset the board to the server-confirmed state
+        setPendingPromotion(null);
+        // The board will revert to server state via the useEffect that syncs with state.fen
+        notify("Promotion cancelled", "error");
+    }, [pendingPromotion, localFen, notify]);
 
     // #7 - Combine last move highlights with pending move highlights
     const customSquareStyles = useMemo(() => {
@@ -141,6 +204,13 @@ export const ChessBoard = () => {
                     squareStyles: customSquareStyles,
                 }}
             />
+            {pendingPromotion && color && (
+                <PromotionDialog
+                    color={color}
+                    onSelect={handlePromotionSelect}
+                    onCancel={handlePromotionCancel}
+                />
+            )}
         </div>
     );
 };
