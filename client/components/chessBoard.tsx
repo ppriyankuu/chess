@@ -99,9 +99,20 @@ export const ChessBoard = () => {
 
         // Check if this is a promotion move
         if (isPromotionMove(sourceSquare, targetSquare, chess)) {
-            // Store the pending promotion and show dialog
-            setPendingPromotion({ from: sourceSquare, to: targetSquare });
-            return true; // Return true to show the piece move, but we'll wait for promotion selection
+            // First validate the move is legal (with temporary promotion)
+            try {
+                chess.move({
+                    from: sourceSquare,
+                    to: targetSquare,
+                    promotion: "q",
+                });
+                // Move is valid, now show the promotion dialog
+                setPendingPromotion({ from: sourceSquare, to: targetSquare });
+                return true;
+            } catch (err) {
+                notify("Invalid move!", "error");
+                return false;
+            }
         }
 
         try {

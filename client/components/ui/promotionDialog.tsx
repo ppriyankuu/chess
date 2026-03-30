@@ -57,10 +57,10 @@ export const PromotionDialog = ({ color, onSelect, onCancel }: PromotionDialogPr
 
     return (
         <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
             onClick={handleBackdropClick}
         >
-            <div className="bg-base-200 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4 animate-fade-in relative">
+            <div className="bg-base-200 rounded-2xl shadow-2xl p-6 w-full max-w-sm text-center space-y-4 relative mx-4">
                 {/* Close button */}
                 <button
                     onClick={onCancel}
@@ -89,7 +89,7 @@ export const PromotionDialog = ({ color, onSelect, onCancel }: PromotionDialogPr
                         <button
                             key={piece}
                             onClick={() => onSelect(piece)}
-                            className="flex flex-col items-center justify-center p-4 rounded-xl bg-base-300 hover:bg-primary hover:text-primary-content transition-all duration-150 hover:scale-105 active:scale-95 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                            className="flex flex-col items-center justify-center p-4 rounded-xl bg-base-300 hover:bg-primary hover:text-primary-content focus:outline-none focus:ring-2 cursor-pointer focus:ring-primary focus:ring-offset-2"
                             title={PIECE_LABELS[piece]}
                         >
                             <span className="text-4xl mb-1">
